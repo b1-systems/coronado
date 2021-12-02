@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Horde\Coronado;
 
-use Horde_Date;
+use DateTime;
+use DateTimeZone;
 use Horde_Db_Adapter;
 use Horde\Coronado\Model\TicketRepo;
 use Horde\Coronado\Model\Ticket;
@@ -49,29 +50,32 @@ class TicketReserver
         $this->timezone = $timezone;
     }
 
-    protected function getHordeDate($param): Horde_Date
+    protected function getDate($param = 'now'): DateTime
     {
-        return new Horde_Date($param, $this->timezone);
+        $zone = new DateTimeZone($this->timezone);
+        $d = new DateTime($param, $zone);
+        return $d;
     }
 
-    public function meetsRequirements(string $vacState, string $lastVaccine, Horde_Date $lastVaccination)
+    public function meetsRequirements(string $vacState, string $lastVaccine, DateTime $lastVaccination)
     {
-        $now = $this->getHordeDate(time());
+        $now = $this->getDate();
+        $diffDays = $now->diff($lastVaccination)->days;
         if ($vacState === self::VAC_STATES[0]) {
             return true;
         } elseif (
             $vacState === self::VAC_STATES[1]
-            && ($now->diff($lastVaccination) >= 28)
+            && ($diffDays >= 28)
         ) {
             return true;
         } elseif (
             $vacState === self::VAC_STATES[2]
-            && ($now->diff($lastVaccination) >= 30 * 5)
+            && ($diffDays >= 30 * 5)
         ) {
             return true;
         } elseif (
             $lastVaccine === self::VACCINES[3]
-            && ($now->diff($lastVaccination) >= 28)
+            && ($diffDays >= 28)
         ) {
             return true;
         }
@@ -96,35 +100,31 @@ class TicketReserver
         return $ticket;
     }
 
-    protected function getStartDate(): Horde_Date
+    protected function getStartDate(): DateTime
     {
-        $date = $this->getHordeDate(time())->add(['day' => 1]);
-        $date->hour = self::HOUR_START;
-        $date->min = 0;
-        $date->sec = 0;
+        $date = $this->getDate()->modify('+ 1 day');
+        $date->setTime(self::HOUR_START, 0, 0);
         return $date;
     }
 
-    protected function getEndDate(): Horde_Date
+    protected function getEndDate(): DateTime
     {
-        $date = $this->getHordeDate(time())->add(['day' => 1]);
-        $date->hour = self::HOUR_STOP;
-        $date->min = 0;
-        $date->sec = 0;
+        $date = $this->getDate()->modify('+ 1 day');
+        $date->setTime(self::HOUR_STOP, 0, 0);
         return $date;
     }
 
-    public function getNextAvailableTimeSlot(): ?Horde_Date
+    public function getNextAvailableTimeSlot(): ?DateTime
     {
         $date = $this->getStartDate();
-        $endTs = $this->getEndDate()->timestamp();
+        $endTs = $this->getEndDate()->getTimestamp();
 
-        while ($date->timestamp() < $endTs) {
-            $c = count($this->ticketRepo->find(['ticket_date' => $date->timestamp()]));
+        while ($date->getTimestamp() < $endTs) {
+            $c = count($this->ticketRepo->find(['ticket_date' => $date->getTimestamp()]));
             if ($c < $this->slotsPerBlock) {
                 return $date;
             }
-            $date = $date->add(['min' => $this->minutesPerBlock]);
+            $date = $date->modify("+ $this->minutesPerBlock minutes");
         }
         return null;
     }

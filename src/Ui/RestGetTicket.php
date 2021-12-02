@@ -30,7 +30,8 @@ use Horde\Coronado\CoronadoException;
 use Horde_Registry;
 use Horde_Session;
 use Horde\Log\Logger;
-use Horde_Date;
+use DateTime;
+use DateTimeZone;
 
 /**
  * Controller class for Public UI
@@ -86,8 +87,8 @@ class RestGetTicket extends RestBase
             );
         }
 
-        $date = intval($data['date']);
-        if (!$date) {
+        $ts = intval($data['date']);
+        if (!$ts) {
             return $this->getResponseStream(
                 ['error' => 'expected date to be a timestamp']
             );
@@ -95,7 +96,9 @@ class RestGetTicket extends RestBase
 
         $timezone = $data['timezone'] ?? 'UTC';
 
-        $date = new Horde_Date($date, $timezone);
+        $zone = new DateTimeZone($timezone);
+        $date = new DateTime('now', $zone);
+        $date->setTimestamp($ts);
 
         $ticketReserver = $this->injector->getInstance(TicketReserver::class);
         $ticketReserver->setTimezone($timezone);

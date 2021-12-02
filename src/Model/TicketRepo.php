@@ -2,7 +2,7 @@
 
 namespace Horde\Coronado\Model;
 
-use Horde_Date;
+use DateTime;
 
 class TicketRepo extends TicketMapper
 {
@@ -19,7 +19,7 @@ class TicketRepo extends TicketMapper
         return $tickets;
     }
 
-    public function createTicket(Horde_Date $date, string $owner = '')
+    public function createTicket(DateTime $date, string $owner = '')
     {
         function genCode()
         {
@@ -40,7 +40,7 @@ class TicketRepo extends TicketMapper
         $ticket = $this->create([
             'ticket_code' => $code,
             'ticket_owner' => $owner,
-            'ticket_date' => $date->timestamp(),
+            'ticket_date' => $date->getTimestamp(),
         ]);
         return $ticket;
     }
