@@ -11,8 +11,10 @@ use Horde\Coronado\Model\Ticket;
 
 class TicketReserver
 {
-    protected const HOUR_START = 10;
-    protected const HOUR_STOP = 16;
+    // remember to use UTC times here
+    protected const HOUR_START = 9;
+    protected const HOUR_STOP = 15;
+
     protected const BLOCK_PER_HOUR = 2;
     protected const MAX_SLOTS = 300;
     public const VAC_STATES = ['ungeimpft', 'erste Impfung erhalten', 'durchgeimpft'];

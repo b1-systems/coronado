@@ -93,7 +93,7 @@ class RestGetTicket extends RestBase
             );
         }
 
-        $timezone = $data['timezone'] ?? 'UTC';
+        $timezone = 'UTC';
 
         $date = new Horde_Date($date, $timezone);
 
